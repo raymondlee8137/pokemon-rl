@@ -93,7 +93,6 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 | OVERWORLD | 0 | Walking around, no menus |
 | BATTLE | 1 | In a Pokémon battle |
 | MENU | 2 | In a menu (start, shop, PC) |
-| TRANSITION | 3 | Map transition / loading |
 
 **Sub-policies** are trained independently via curriculum learning before integrated fine-tuning:
 - **Navigation Policy:** Overworld movement, exploration, pathfinding. Trained on save states at various map locations.

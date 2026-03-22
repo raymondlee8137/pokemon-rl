@@ -1,4 +1,4 @@
-# Phase 0: Foundations — Proof of Concept
+# Phase 0: Proof of Concept
 
 ## Overview
 
