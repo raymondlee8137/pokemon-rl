@@ -26,7 +26,7 @@ The training loop works like this:
 
 The first milestone was reaching 100% starter pickup rate across evaluation runs. This required the agent to learn a specific sequence: walk downstairs, exit the house, walk to route 1, trigger the Oak encounter, navigate the dialogue, and select a Pokémon.
 
-My most successful model was one that trained for ~10 million timesteps, the agent achieved **100% starter pickup** on non-deterministic evaluation runs.
+My most successful model was one that trained for ~10 million timesteps. The agent achieved **100% starter pickup** on non-deterministic evaluation runs.
 
 ## What I Learned
 
@@ -58,7 +58,7 @@ The biggest single improvement came from setting **`n_steps` equal to `MAX_STEPS
 
 ### Training Dynamics: The Crash-Recovery Pattern
 
-A consistent pattern across training runs was an early crash-recovery cycle in total reward. That is why I explored a lower `n_steps` to see if it could help with the oscillation I would see. However, as of now it seems to have just degraded performance.
+A consistent pattern across training runs was an early crash-recovery cycle in total reward. That is why I explored a lower `n_steps` to see if it could help with the oscillation observed in training. However, as of now it seems to have just degraded performance.
 
 ![Value Loss](assets/screenshots/value_loss.png)
 
@@ -74,7 +74,7 @@ The cycle works like this:
 1. **Early episodes:** Every tile is new, so exploration reward floods in. The policy updates to maximize this signal.
 2. **Overshoot:** The policy over-commits to whatever trajectory scored highest. Next batch of experience doesn't match, and reward drops.
 3. **Recovery:** PPO's clipping mechanism prevents catastrophic policy collapse, and the agent gradually relearns.
-4. **Stabilization:** By ~episode 50, the cycle dampens and the policy converges.
+4. **Stabilization:** By ~episode 40, the cycle dampens and the policy converges.
 
 This is visible in the TensorBoard curves — value loss, policy gradient loss, exploration reward, and event reward all show synchronized oscillations that attenuate over training.
 
@@ -84,11 +84,11 @@ This is visible in the TensorBoard curves — value loss, policy gradient loss, 
 
 | Metric | Value |
 |--------|-------|
-| Total timesteps | ~13M (50 episodes × 16 envs × 16,384 steps) |
-| Starter pickup rate | **100%** on deterministic evaluation |
-| Training time | ~8 hours wall clock |
+| Total timesteps | ~10M (40 episodes × 16 envs × 16,384 steps) |
+| Starter pickup rate | **100%** on non-deterministic evaluation |
+| Training time | ~4 hours wall clock |
 
-The agent reliably navigates from the bedroom to Oak's lab, picks a starter, and defeats the rival. It does not consistently reach Route 1 within the current episode length — this is an episode truncation issue (`max_steps` was set to 16,384), not a learning failure.
+The agent reliably navigates from the bedroom to Oak's lab, picks a starter, and defeats the rival. It does not consistently reach Route 1 within the current episode length. This is an episode truncation issue (`max_steps` was set to 16,384), not a learning failure.
 
 ## Future Goals
 

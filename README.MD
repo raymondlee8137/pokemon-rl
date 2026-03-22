@@ -1,50 +1,45 @@
-# Hierarchical RL Agent for Pokémon Red
-
-A hierarchical reinforcement learning system that plays Pokémon Red using specialized sub-policies coordinated by a meta-controller.
-
-**Author:** Raymond
-
----
+# Reinforcement Learning Agent for Pokémon Red
 
 ## Motivation
 
-I originally watched Peter Whidden's Youtube video "Training AI to Play Pokemon with Reinforcement Learning" and found it fascinating. As someone who's played Pokémon since I was a kid and has a growing interest in RL, I decided to attempt the project myself.
+I originally watched Peter Whidden's [Training AI to Play Pokemon with Reinforcement Learning](https://www.youtube.com/watch?v=DcYLT37ImBY&t=967s&pp=ygUNcGV0ZXIgd2hpZGRlbg%3D%3D) and felt very passionately about his experiment. I've played Pokémon since I was a kid and have always found myself intrigued by autonomy. Seeing Peter Whidden's experiment inspired me to attempt the project myself.
 
-Most RL Pokémon projects use a single flat agent with reward shaping to brute-force progress. This project takes a fundamentally different approach.
+The aim of this project is to improve upon Whidden's model and address some direct issues he mentioned. One key difference is that my model uses RAM-based observations rather than Whidden's CNN approach. This is both a practical choice given hardware constraints and a deliberate architectural decision. 
 
-One of Peter Whidden's recommended next steps forward was building a hierarchical approach. I've decided to attempt this with a meta-controller coordinating specialized sub-policies, this system separates high-level decision-making from low-level execution.
+1. Removing the shortcut
+- Whidden explicitly mentions that his model starts after obtaining the Pokedex because the back tracking required was difficult for his model to do. My initial plan is to tackle this by using more dense rewards and the hierarchical approach described below.
+2. A hierarchical approach
+- Whidden uses a flat PPO model. That means one model needs to learn all aspects of the game, including both high-level decision making and low-level execution. I aim to apply a meta-controller that can coordinate sub-policies.
 
-### Why is Pokémon challenging?
+## Why is Pokémon challenging?
 
-Pokémon Red provides the full complexity profile of real autonomy problems: partial observability (opponent stats unknown in battle), long time horizons (thousands of steps between meaningful milestones), mixed objectives (explore, fight, heal, progress story), and adversarial elements (trainer and wild battles). A gridworld would be faster to train but wouldn't force the architectural decisions that matter in production systems.
+Pokémon Red provides the full complexity profile of real autonomy problems: partial observability (opponent stats unknown in battle), long time horizons (thousands of steps between meaningful milestones), mixed objectives (explore, fight, heal, progress story), and adversarial elements (trainer and wild battles).
 
 ## Architecture
 
 The system uses the **Options Framework** (Sutton, Precup & Singh, 1999) with three layers:
 
 ```
-┌─────────────────────────────────────────────┐
-│              Meta-Controller                │
-│   Reads game state → selects sub-policy     │
-│   (Behavior Planner analog)                 │
-└──────┬──────────┬──────────┬────────────────┘
-       │          │          │
-       ▼          ▼          ▼
-  ┌─────────┐ ┌────────┐ ┌────────┐
-  │  Nav    │ │ Battle │ │  Menu  │
-  │ Policy  │ │ Policy │ │ Policy │
-  │(Learned)│ │(Learned)│ │(Rules) │
-  └─────────┘ └────────┘ └────────┘
-       │          │          │
-       ▼          ▼          ▼
-  ┌─────────────────────────────────────────┐
-  │         PyBoy Emulator (RAM I/O)        │
-  │     16 parallel instances via           │
-  │     SubprocVecEnv                       │
-  └─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│               Meta-Controller                   │
+│       Reads game state → selects sub-policy     │
+└──────────┬────────────────┬────────────┬────────┘
+           │                │            │
+           ▼                ▼            ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│  Navigation  │ │    Battle    │ │     Menu     │
+│    Policy    │ │    Policy    │ │    Policy    │
+│  (Learned)   │ │  (Learned)   │ │   (Rules)    │
+└──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+       │                │                │
+       ▼                ▼                ▼
+┌─────────────────────────────────────────────────┐
+│            PyBoy Emulator (RAM I/O)             │
+│       16 parallel instances via SubprocVecEnv   │
+└─────────────────────────────────────────────────┘
 ```
 
-**Observations** are RAM-based, not pixel-based. The agent reads structured game state directly from memory addresses — player position, map ID, party stats, battle flags, event flags. This is mostly due to hardware constraints. My setup would struggle to handle a vision-based approach. However, vision-based observations are a documented stretch goal.
+**Observations** are RAM-based, not pixel-based. The agent reads structured game state directly from memory addresses (player position, map ID, party stats, battle flags, event flags).
 
 ## Tech Stack
 
@@ -63,11 +58,11 @@ The system uses the **Options Framework** (Sutton, Precup & Singh, 1999) with th
 
 **Objective:** Build the environment, training infrastructure, and reward system. Prove the agent can learn meaningful behavior.
 
-**Status:** Complete. Agent achieves **100% starter Pokémon pickup** on deterministic evaluation after ~10M timesteps.
+**Status:** Complete. Agent achieves **100% starter Pokémon pickup** on non-deterministic evaluation after ~10M timesteps.
 
 Key outcomes:
 - Built Gymnasium-compatible environment wrapper with RAM-based observations
-- Implemented dense reward shaping (exploration, events, levels, step penalty)
+- Implemented reward shaping (exploration, events, levels, step penalty)
 - Discovered and fixed reward magnitude issues (A-button spam from over-weighted event rewards)
 - Tuned hyperparameters for Pokémon's long-horizon dynamics — full-episode rollouts (`n_steps = max_steps`) proved critical
 - Built comprehensive logging: per-episode reward components, action distributions, rolling statistics, checkpoint metadata
@@ -83,6 +78,7 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 - Refine reward shaping — balance exploration vs. event vs. level rewards
 - Add intermediate event flags between Pallet Town and Pewter City for denser signal
 - Establish baseline metrics for rigorous comparison against hierarchical approach
+- Improve visualization method when testing models after training
 
 **Success criteria:** Agent navigates Pallet Town → Route 1 → Viridian City → Viridian Forest → Pewter City with >60% reliability across 10 evaluation runs.
 
@@ -97,12 +93,11 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 | OVERWORLD | 0 | Walking around, no menus |
 | BATTLE | 1 | In a Pokémon battle |
 | MENU | 2 | In a menu (start, shop, PC) |
-| DIALOGUE | 3 | Talking to NPC |
-| TRANSITION | 4 | Map transition / loading |
+| TRANSITION | 3 | Map transition / loading |
 
 **Sub-policies** are trained independently via curriculum learning before integrated fine-tuning:
 - **Navigation Policy:** Overworld movement, exploration, pathfinding. Trained on save states at various map locations.
-- **Battle Policy:** Move selection under partial observability. Pre-trained using a standalone Python battle simulator so it learns general type-effectiveness principles rather than memorizing specific encounters.
+- **Battle Policy:** Move selection under partial observability. The inital plan is to pre-train using a standalone Python battle simulator so it learns general type-effectiveness principles rather than memorizing specific encounters.
 - **Menu Policy:** Rule-based state machine. Deterministic, not learned.
 
 **Target:** Agent reaches and defeats Brock (Boulder Badge) with >60% reliability.
@@ -113,7 +108,6 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 - **Extend to Misty (Cerulean Gym)** — Proves hierarchical architecture generalizes beyond one gym
 - **Curriculum Learning** — Auto-adjust task difficulty (start closer to Brock, gradually move back to Pallet Town)
 - **Sim-to-Sim Transfer** — Train on Red, evaluate on Blue (same engine, different wild Pokémon distribution)
-- **Backtracking** — Tackle the challenge of needing to backtrack to get the Pokedex
 
 ## Getting Started
 
@@ -121,7 +115,6 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 
 - Python 3.10+
 - A Pokémon Red ROM file (`pokemon_red.gb`) — not included in this repo
-- ~8GB RAM (16 parallel emulator instances)
 
 ### Installation
 
