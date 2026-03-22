@@ -1,0 +1,44 @@
+# ROM and game files
+*.gb
+*.gbc
+*.gb.ram
+*.gb.rtc
+*.state
+*.sav
+
+# Trained models / checkpoints
+*.zip
+checkpoints*/
+models/
+
+# Training logs
+tb_logs/
+wandb/
+*.tfevents*
+
+# Python
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+dist/
+build/
+.eggs/
+*.egg-info/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+
+# Misc
+.DS_Store
