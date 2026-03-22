@@ -54,7 +54,7 @@ The system uses the **Options Framework** (Sutton, Precup & Singh, 1999) with th
 
 ## Project Phases
 
-### Phase 0: Foundations — Proof of Concept ✅
+### Phase 0: Foundations — Proof of Concept
 
 **Objective:** Build the environment, training infrastructure, and reward system. Prove the agent can learn meaningful behavior.
 
@@ -69,7 +69,7 @@ Key outcomes:
 
 See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, TensorBoard analysis, and hyperparameter evolution.
 
-### Phase 1: Flat Baseline Agent 🔄
+### Phase 1: Flat Baseline Agent
 
 **Objective:** Train a single flat PPO agent as the experimental baseline. Extend the agent's reach from Pallet Town through Route 1 to Viridian City.
 
@@ -82,7 +82,7 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 
 **Success criteria:** Agent navigates Pallet Town → Route 1 → Viridian City → Viridian Forest → Pewter City with >60% reliability across 10 evaluation runs.
 
-### Phase 2: Hierarchical Architecture 📋
+### Phase 2: Hierarchical Architecture
 
 **Objective:** Implement the Options Framework — the core contribution of this project.
 
