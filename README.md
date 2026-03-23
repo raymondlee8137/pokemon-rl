@@ -73,33 +73,17 @@ See [`phase_0_setup/README.md`](phase_0_setup/README.md) for detailed findings, 
 
 **Objective:** Train a single flat PPO agent as the experimental baseline. Extend the agent's reach from Pallet Town through Route 1 to Viridian City.
 
-**Key tasks:**
-- Increase episode length (`max_steps`) to give the agent runway beyond starter pickup
-- Refine reward shaping — balance exploration vs. event vs. level rewards
-- Add intermediate event flags between Pallet Town and Pewter City for denser signal
-- Establish baseline metrics for rigorous comparison against hierarchical approach
-- Improve visualization method when testing models after training
+Phase 1 extends the agent's reach beyond starter pickup by increasing episode length, refining reward shaping to reduce A/B spam, and adding denser event flags between Pallet Town and Pewter City for more training signal. The flat PPO agent also serves as the baseline for rigorous comparison against the hierarchical approach in Phase 2.
 
-**Success criteria:** Agent navigates Pallet Town → Route 1 → Viridian City → Viridian Forest → Pewter City with >60% reliability across 10 evaluation runs.
+Detailed findings will be documented in [`phase_1/README.md`](phase_1/README.md).
 
 ### Phase 2: Hierarchical Architecture
 
 **Objective:** Implement the Options Framework — the core contribution of this project.
 
-**Meta-Controller** classifies game state from RAM into modes:
+Phase 2 implements the Options Framework. A learned meta-controller classifies game state from RAM (overworld, battle, menu) and dispatches to specialized sub-policies: a navigation policy for overworld movement, a battle policy pre-trained in a standalone simulator, and a rule-based menu handler.
 
-| Game Mode | ID | Description |
-|---|---|---|
-| OVERWORLD | 0 | Walking around, no menus |
-| BATTLE | 1 | In a Pokémon battle |
-| MENU | 2 | In a menu (start, shop, PC) |
-
-**Sub-policies** are trained independently via curriculum learning before integrated fine-tuning:
-- **Navigation Policy:** Overworld movement, exploration, pathfinding. Trained on save states at various map locations.
-- **Battle Policy:** Move selection under partial observability. The inital plan is to pre-train using a standalone Python battle simulator so it learns general type-effectiveness principles rather than memorizing specific encounters.
-- **Menu Policy:** Rule-based state machine. Deterministic, not learned.
-
-**Target:** Agent reaches and defeats Brock (Boulder Badge) with >60% reliability.
+Detailed findings will be documented in [`phase_2/README.md`](phase_2/README.md).
 
 ## Stretch Goals
 

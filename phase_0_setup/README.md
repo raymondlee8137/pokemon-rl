@@ -6,17 +6,19 @@ Phase 0 is the foundation layer of the Pokémon Red Hierarchical RL project. The
 
 Success for phase 0 was simple: can the agent consistently pick a starter Pokémon? That requires navigating from the player's bedroom, through Pallet Town, to Professor Oak's lab, and interacting with the correct sequence of dialogues and menus. All in all, a non-trivial sequence of ~50+ precise actions for an agent that starts knowing nothing.
 
-## How the Code Works
+## Design Decisions
 
-The system has three core files:
+**Why Gymnasium as the environment interface** — It's the standard RL env API, which means direct SB3 compatibility out of the box and the ability to swap algorithms later without rewriting the environment contract. Any PPO variant or future algorithm that speaks Gymnasium just works.
 
-**`pokemon_env.py`** — A Gymnasium-compatible environment wrapper around the PyBoy Game Boy emulator. On each `step()`, it presses a button, ticks the emulator forward, reads game state directly from RAM addresses (player position, map ID, battle flag, party data, event flags), and computes a reward. The observation space is a structured vector of RAM-derived values - no pixels or CNN.
+**Why SubprocVecEnv over DummyVecEnv** — True parallelism across 16 emulator instances. PyBoy is CPU-bound, so multiprocessing gives near-linear speedup versus sequential stepping. DummyVecEnv runs all environments in one process and steps them sequentially — with 16 instances, that would be 16× slower with no benefit.
 
-**`train_rl.py`** — The training script. Runs PPO (via Stable-Baselines3) across 16 parallel emulator instances using `SubprocVecEnv`. Includes a custom `RewardLoggerCallback` that tracks per-episode rewards broken down by component (exploration, events, levels, step penalty), action distributions, and rolling statistics. Logs to TensorBoard. A `MetadataCheckpointCallback` saves JSON sidecars alongside model checkpoints with training metadata.
+**Why RAM-based observations over pixel-based** — Eliminates CNN complexity entirely. The agent reads structured game state directly from memory addresses (coordinates, map ID, party stats, battle flags, event flags), which means observations are human-readable and reward shaping is fast to iterate on. No perception layer to debug when behavior is unexpected.
 
-**`constants.py`** — Centralized configuration for RAM addresses, reward values, action mappings, event flag definitions, and timing parameters. Keeps magic numbers out of the environment and training code.
+**Why JSON metadata sidecars alongside checkpoints** — Reproducibility. Every saved model can be traced back to the exact hyperparameters and training context without loading the model. Useful when comparing runs days or weeks apart — the sidecar has the full picture.
 
-The training loop works like this:
+**Why `constants.py` centralizes all magic numbers** — Single source of truth for RAM addresses, reward values, action mappings, and event flag definitions. Prevents silent drift between `pokemon_env.py` and `train_rl.py` when tuning a value in one place and forgetting to update the other.
+
+The training loop:
 1. 16 PyBoy instances load the same save state (standing in Pallet Town bedroom)
 2. Each instance runs independently, collecting experience
 3. After `n_steps` per environment, PPO computes a policy update
@@ -90,24 +92,3 @@ This is visible in the TensorBoard curves — value loss, policy gradient loss, 
 
 The agent reliably navigates from the bedroom to Oak's lab, picks a starter, and defeats the rival. It does not consistently reach Route 1 within the current episode length. This is an episode truncation issue (`max_steps` was set to 16,384), not a learning failure.
 
-## Future Goals
-
-### General
-- **Visualization** I'm currently unhappy with my set up for testing a model. I'd like to implement a way to watch all tested models run at the same time
-
-### Immediate (Phase 1)
-- **Increase `max_steps`** to 32,768+ to give the agent runway to reach Route 1 and beyond
-- **Reach Viridian City** as the next navigation milestone
-- **Optimize reward shaping** — balance exploration vs. event vs. level reward magnitudes to reduce A-spam behavior and incentivize directional navigation
-- **Refine event flag handling** — add intermediate events between starter pickup and Pewter City to provide denser signal for longer trajectories
-
-### Architecture (Phase 2)
-- **Meta-controller implementation** — a learned policy-over-options that classifies game state (overworld, battle, menu, dialogue) and selects the appropriate sub-policy
-- **Navigation sub-policy** — specialized overworld movement
-- **Battle sub-policy** — decision-making under partial observability (opponent stats unknown), trained via standalone battle simulator for generalization
-- **Rule-based menu policy** — deterministic menu handling
-
-### Stretch
-- **Obtain the Pokédex** — requires backtracking (Pallet Town → Route 1 → Viridian → back to Pallet), which is a harder exploration problem than forward progress
-- **Defeat Brock (Boulder Badge)** — the project's ultimate Phase 2 target
-- **Vision-based observations** — replace RAM reading with CNN over game frames as a documented stretch goal
