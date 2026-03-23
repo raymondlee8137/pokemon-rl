@@ -2,7 +2,7 @@
 
 ## Motivation
 
-I originally watched Peter Whidden's [Training AI to Play Pokemon with Reinforcement Learning](https://www.youtube.com/watch?v=DcYLT37ImBY&t=967s&pp=ygUNcGV0ZXIgd2hpZGRlbg%3D%3D) and felt very passionately about his experiment. I've played Pokémon since I was a kid and have always found myself intrigued by autonomy. Seeing Peter Whidden's experiment inspired me to attempt the project myself.
+I originally watched Peter Whidden's [Training AI to Play Pokemon with Reinforcement Learning](https://www.youtube.com/watch?v=DcYLT37ImBY&t=967s&pp=ygUNcGV0ZXIgd2hpZGRlbg%3D%3D) and felt very passionate about his experiment. I've played Pokémon since I was a kid and have always found myself intrigued by autonomy. Seeing Peter Whidden's experiment inspired me to attempt the project myself.
 
 The aim of this project is to improve upon Whidden's model and address some direct issues he mentioned. One key difference is that my model uses RAM-based observations rather than Whidden's CNN approach. This is both a practical choice given hardware constraints and a deliberate architectural decision. 
 
